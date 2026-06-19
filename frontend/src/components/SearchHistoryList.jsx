@@ -1,6 +1,6 @@
 import HistoryItem from './HistoryItem';
 
-export default function SearchHistoryList({ history, onClear }) {
+export default function SearchHistoryList({ history, onClear, onSelect }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
@@ -28,13 +28,9 @@ export default function SearchHistoryList({ history, onClear }) {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto">
-          <table className="w-full">
-            <tbody>
-              {history.map((entry, index) => (
-                <HistoryItem key={entry.id || index} entry={entry} index={index} compact />
-              ))}
-            </tbody>
-          </table>
+          {history.map((entry, index) => (
+            <HistoryItem key={entry.id || index} entry={entry} index={index} compact onSelect={onSelect} />
+          ))}
         </div>
       )}
     </div>

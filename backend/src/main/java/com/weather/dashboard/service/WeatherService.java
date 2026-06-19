@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class WeatherService {
@@ -100,7 +102,9 @@ public class WeatherService {
     }
 
     public List<WeatherResponse> getHistory(Long userId) {
+        Set<String> seen = new HashSet<>();
         return historyRepository.findAllByUserIdOrderBySearchedAtDesc(userId).stream()
+                .filter(h -> seen.add(h.getCity().toLowerCase()))
                 .map(WeatherResponse::from)
                 .toList();
     }

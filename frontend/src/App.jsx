@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { useWeather } from './hooks/useWeather';
 import SearchBar from './components/SearchBar';
 import WeatherCard from './components/WeatherCard';
 import SearchHistoryList from './components/SearchHistoryList';
+import HistoryItem from './components/HistoryItem';
 import ErrorAlert from './components/ErrorAlert';
 import LoadingSpinner from './components/LoadingSpinner';
 import LoginForm from './components/LoginForm';
@@ -14,7 +16,12 @@ import WeatherMap from './components/WeatherMap';
 function Dashboard() {
   const { weather, history, loading, error, searchCity, clearAllHistory } = useWeather();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [showHistory, setShowHistory] = useState(false);
+
+  const handleSelectCity = (city) => {
+    searchCity(city);
+  };
 
   return (
     <>
@@ -22,30 +29,36 @@ function Dashboard() {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:flex fixed right-0 inset-y-0 w-72 z-20 flex-col backdrop-blur-xl"
-        style={{ backgroundColor: 'rgba(11, 13, 20, 0.88)', borderLeft: '1px solid var(--border)' }}
+        style={{ backgroundColor: 'var(--bg-glass)', borderLeft: '1px solid var(--border)' }}
       >
         <Navbar />
-        <SearchHistoryList history={history} onClear={clearAllHistory} />
+        <SearchHistoryList history={history} onClear={clearAllHistory} onSelect={handleSelectCity} />
       </div>
 
       {/* Mobile top bar */}
       <div
         className="lg:hidden fixed top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-3 backdrop-blur-xl"
-        style={{ backgroundColor: 'rgba(11, 13, 20, 0.88)', borderBottom: '1px solid var(--border)' }}
+        style={{ backgroundColor: 'var(--bg-glass)', borderBottom: '1px solid var(--border)' }}
       >
         <span className="text-base font-serif tracking-tight">
           Weather<span className="italic" style={{ color: 'var(--amber)' }}>Station</span>
         </span>
-        <div className="flex items-center gap-2">
-          {user && (
-            <button
-              onClick={logout}
-              className="text-xs transition-colors"
-              style={{ color: 'var(--rose)' }}
-            >
-              Logout
-            </button>
-          )}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={toggleTheme}
+            className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+            style={{ backgroundColor: 'var(--bg-card)', color: 'var(--text-secondary)' }}
+          >
+            {theme === 'dark' ? (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </button>
           <button
             onClick={() => setShowHistory(!showHistory)}
             className="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
@@ -66,7 +79,7 @@ function Dashboard() {
           <div
             className="lg:hidden fixed bottom-0 left-0 right-0 z-30 flex flex-col backdrop-blur-xl rounded-t-2xl"
             style={{
-              backgroundColor: 'rgba(11, 13, 20, 0.95)',
+              backgroundColor: 'var(--bg-glass-heavy)',
               border: '1px solid var(--border)',
               maxHeight: '55vh',
             }}
@@ -91,21 +104,17 @@ function Dashboard() {
                   <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No searches recorded yet</p>
                 </div>
               ) : (
-                <table className="w-full">
-                  <tbody>
-                    {history.map((entry, i) => (
-                      <tr key={entry.id || i} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
-                        <td className="py-2.5 px-4">
-                          <span className="mr-1.5">{['☀️','🌤️','⛅','☁️','🌫️','🌦️','🌧️','🌨️','⛈️'][entry.weatherCode] || '❓'}</span>
-                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{entry.city}</span>
-                        </td>
-                        <td className="py-2.5 px-4 text-right text-sm" style={{ color: 'var(--amber)', fontFamily: "'JetBrains Mono', monospace" }}>
-                          {Math.round(entry.temperature)}°
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div>
+                  {history.map((entry, i) => (
+                    <HistoryItem
+                      key={entry.id || i}
+                      entry={entry}
+                      index={i}
+                      compact
+                      onSelect={(city) => { handleSelectCity(city); setShowHistory(false); }}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -113,7 +122,7 @@ function Dashboard() {
       )}
 
       {/* Main content */}
-      <div className="relative z-10 flex flex-col items-center pt-16 lg:pt-12 px-4 lg:mr-72">
+      <div className="relative z-10 flex flex-col items-center pt-16 lg:pt-12 px-4 lg:mr-72 gap-5">
         <SearchBar onSearch={searchCity} loading={loading} history={history} />
         <ErrorAlert message={error} />
         <LoadingSpinner loading={loading} />
@@ -142,10 +151,12 @@ function AuthGate() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <div className="min-h-screen">
-        <AuthGate />
-      </div>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <div className="min-h-screen">
+          <AuthGate />
+        </div>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

@@ -2,13 +2,15 @@ import { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { omProtocol } from '@openmeteo/weather-map-layer';
+import { useTheme } from '../context/ThemeContext';
 
 export default function WeatherMap({ weather }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
-    if (mapRef.current) return;
+    const style = theme === 'dark' ? 'dark_all' : 'light_all';
 
     maplibregl.addProtocol('om', omProtocol);
 
@@ -20,10 +22,10 @@ export default function WeatherMap({ weather }) {
           base: {
             type: 'raster',
             tiles: [
-              'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-              'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-              'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-              'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+              `https://a.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`,
+              `https://b.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`,
+              `https://c.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`,
+              `https://d.basemaps.cartocdn.com/${style}/{z}/{x}/{y}{r}.png`,
             ],
             tileSize: 256,
             attribution: '© CARTO, © OpenStreetMap',
@@ -60,7 +62,7 @@ export default function WeatherMap({ weather }) {
       map.remove();
       mapRef.current = null;
     };
-  }, []);
+  }, [theme]);
 
   useEffect(() => {
     const m = mapRef.current;
